@@ -17,7 +17,7 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('chat', msg);
   });
 });
-
-server.listen(3000, () => {
+const PORT=3000;
+server.listen(PORT, '0.0.0.0', () => {
   console.log('listening on *:3000');
 });
