@@ -1,277 +1,167 @@
 <!DOCTYPE html>
-<head>
-  <title>Whatsapp Chat</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-
-  <style>
-    /* html {
-      scroll-behavior: smooth;
-    } */
-
-    * {
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      align-content: center;
-      flex-direction: column;
-      margin: 0;
-      height: 100vh;
-      width: 100vw;
-      font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    }
-
-    .maindiv {
-      display: flex;
-      flex-direction: column;
-      height: 95vh;
-      width: 85vw;
-      margin-top: 2em;
-      padding: 0.5rem;
-      background-color: #333;
-
-    }
-
-    .sendmsg {
-      display: flex;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.15);
-      padding: 0.25rem;
-      display: flex;
-      height: 4rem;
-      box-sizing: border-box;
-      backdrop-filter: blur(10px);
-      align-self: flex-end;
-    }
-
-    #form {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.15);
-      padding: 0.25rem;
-      display: flex;
-      height: 4rem;
-      box-sizing: border-box;
-      backdrop-filter: blur(10px);
-      align-self: flex-end;
-    }
-
-    #input {
-      border: none;
-      padding: 0 1rem;
-      flex-grow: 1;
-      border-radius: 2rem;
-      margin: 0.25rem;
-    }
-
-    #input:focus {
-      outline: none;
-    }
-
-    #form>button {
-      background: #333;
-      border: none;
-      padding: 0 1rem;
-      margin: 0.25rem;
-      border-radius: 3px;
-      outline: none;
-      color: #fff;
-
-    }
-
-
-
-
-    .chatBox {
-      display: flex;
-      flex-direction: column;
-      height: 90%;
-      overflow: auto;
-      width: 100%;
-    }
-
-    .sendmsg {
-      position: relative;
-      bottom: 0;
-      left: 0;
-    }
-
-    .right {
-      background-color: #fff;
-      display: flex;
-      align-self: flex-end;
-      align-items: center;
-      width: 50%;
-      min-height: 45px;
-      border-radius: 5px;
-    }
-
-    .left {
-      background-color: #fff;
-      display: flex;
-      align-self: flex-start;
-      align-items: center;
-      width: 50%;
-      min-height: 45px;
-      border-radius: 5px;
-    }
-
-    p {
-      width: 100%;
-      margin: 10px 0;
-      border-top: 5px solid whitesmoke;
-      border-radius: 4px;
-      padding: 4px 0px 0px 4px;
-      word-wrap: break-word;
-      /* Add this property to handle long words */
-    }
-
-    .left div,
-    .right div {
-      display: flex;
-
-    }
-
-
-
-
-    ::-webkit-scrollbar {
-      width: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background-color: #888;
-      border-radius: 5px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background-color: #f1f1f1;
-    }
-
-
-    ::-webkit-scrollbar-corner {
-      background-color: #f1f1f1;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="maindiv">
-    <!-- this is main -->
-    <div id="Box" class="chatBox">
-
-
-      <!-- dl;sajf; lsajdfl;sj all msgs -->
-
-
-    </div>
-
-
-
-    <!-- this is send msg    -->
-    <div class="sendmsg">
-      <form id="form" action="">
-        <input id="input" autocomplete="off" />
-        <div class="file">
-          <input type="file" name="File" id="file">
-        </div><button>Send</button>
-      </form>
-    </div>
-
-  </div>
-  <!--  ---------   -->
-
-  <script src="/socket.io/socket.io.js"></script>
-
-  <script>
-    function scrollToBottom() {
-      const chatBox = document.getElementById('Box');
-      chatBox.scrollTop = chatBox.scrollHeight;
-    }
-    let name = `user${Math.floor(Math.random() * 1000)}`;
-
-    // while(!name){ name=prompt("Please Enter Your Name")}
-
-    let messages = document.getElementById('Box');
-
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
-    const file = document.getElementById('file');
-
-
-    const addfile = (msg) => {
-      if (!msg.file || msg.name == "") return;
-      const downloadbtn = document.createElement('a');
-      const fileurl = URL.createObjectURL(msg.file);
-      downloadbtn.href = fileurl;
-      downloadbtn.download = msg.name;
-      downloadbtn.innerHTML = `<button>Download</button>`;
-      return downloadbtn;
-    }
-    const recievefile = (msg) => {
-      if (!msg.file || msg.file == "") { return; } //whatever whatever
-      const file = new Blob([msg.file.file], { type: 'application/octet-stream' });
-      const downloadbtn = document.createElement('a');
-      const fileurl = URL.createObjectURL(file);
-      downloadbtn.href = fileurl;
-      downloadbtn.download = msg.file.name;
-      downloadbtn.innerHTML = `<button>Download</button>`;
-      return downloadbtn;
-    }
-
-
-
-
-    let socket = io();
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (input.value) {
-        let value = input.value;
-        // console.log(file.files[0])
-        const fileObject = file.files[0] ? { name: file.files[0].name, file: file.files[0], lastModified: file.files[0].lastModified, lastModifiedDate: file.files[0].lastModifiedDate, size: file.files[0].size, type: file.files[0].type } : "";
-
-        let msg = { 'name': name, 'meassage': value, file: fileObject };
-        console.log(msg)
-
-
-
-
-
-        socket.emit('chat-message', msg);
-        let item2 = document.createElement('div');
-        item2.className = "right";
-        item2.innerHTML = `<div><p><span>me</span> : ${value}</p><hr>${msg.file ? msg.file.name : ""}</div>`;
-
-
-
-
-        msg.file ? item2.appendChild(addfile(msg.file)) : "";
-
-
-        // console.log(messages)
-        messages.appendChild(item2);
-        window.scrollTo(0, document.body.scrollHeight);
-        input.value = '';
-        file.value = '';
-        scrollToBottom()
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Whatsapp Chat</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #f8f9fa;
       }
-    });
+      .chat-container {
+        width: 90%;
+        max-width: 600px;
+        background: #333;
+        color: white;
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 90vh;
+      }
+      .chat-box {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 10px;
+        background: #222;
+      }
+      .message {
+        padding: 10px;
+        margin: 5px;
+        border-radius: 5px;
+        max-width: 75%;
+      }
+      .message.right {
+        align-self: flex-end;
+        background: #0d6efd;
+        color: white;
+      }
+      .message.left {
+        align-self: flex-start;
+        background: #f8f9fa;
+        color: black;
+      }
+      .chat-input {
+        display: flex;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.15);
+      }
+      .chat-input input {
+        flex-grow: 1;
+        margin-right: 10px;
+        border-radius: 20px;
+        border: none;
+        padding: 10px;
+      }
+      .chat-input button {
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="chat-container">
+      <div id="chatBox" class="chat-box"></div>
+      <div class="chat-input">
+        <input
+          id="input"
+          type="text"
+          class="form-control"
+          placeholder="Type a message..."
+        />
+        <input type="file" id="file" class="form-control-file" />
+        <button id="sendBtn" class="btn btn-primary">Send</button>
+      </div>
+    </div>
+    <script>
+      let socket = io();
+      let name = `user${Math.floor(Math.random() * 1000)}`;
+      const chatBox = document.getElementById("chatBox");
+      const input = document.getElementById("input");
+      const fileInput = document.getElementById("file");
+      const sendBtn = document.getElementById("sendBtn");
 
-    socket.on('chat', function (msg) {
-      let item = document.createElement('div');
-      item.className = "left";
-      item.innerHTML = `<div><p><span>${msg.name}</span> : ${msg.meassage}</p><hr><span>${msg.file ? msg.file.name : ""}</span></div>`;
-      msg.file ? item.appendChild(recievefile(msg)) : "";// no need to have conditional here 
+      
+      input.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault(); // Prevents line break in input field
+          sendBtn.click(); // Trigger send button click event
+        }
+      });
+      // Auto-scroll function
+      function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }
 
-      messages.appendChild(item);
-      scrollToBottom()
-    });
+      // Convert file to Base64
+      function convertFileToBase64(file, callback) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => callback(reader.result);
+        reader.onerror = (error) => console.log("Error: ", error);
+      }
 
-  </script>
-</body>
+      // Add a new message to the chat
+      function addMessage(msg, type) {
+        let messageDiv = document.createElement("div");
+        messageDiv.className = `message ${type}`;
+        messageDiv.innerHTML = `<strong>${msg.name}</strong>: ${msg.message}`;
 
+        // If the message contains a file
+        if (msg.fileData && msg.fileName) {
+          let fileLink = document.createElement("a");
+          fileLink.href = msg.fileData;
+          fileLink.download = msg.fileName;
+          fileLink.innerHTML = `<br><button class='btn btn-sm btn-light mt-1'>Download ${msg.fileName}</button>`;
+          messageDiv.appendChild(fileLink);
+        }
+
+        chatBox.appendChild(messageDiv);
+        scrollToBottom();
+      }
+
+      // Send message on button click
+      sendBtn.addEventListener("click", () => {
+        if (input.value.trim() || fileInput.files.length > 0) {
+          let msg = {
+            name: name,
+            message: input.value,
+            fileData: null, // Will be set if a file is uploaded
+            fileName: null,
+          };
+
+          // If a file is selected, convert it to Base64 and send
+          if (fileInput.files.length > 0) {
+            let file = fileInput.files[0];
+            convertFileToBase64(file, (base64Data) => {
+              msg.fileData = base64Data;
+              msg.fileName = file.name;
+              socket.emit("chat-message", msg);
+              addMessage(msg, "right");
+            });
+          } else {
+            socket.emit("chat-message", msg);
+            addMessage(msg, "right");
+          }
+
+          input.value = "";
+          fileInput.value = "";
+        }
+      });
+
+      // Listen for messages from other users
+      socket.on("chat", (msg) => {
+        addMessage(msg, "left");
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
 </html>
